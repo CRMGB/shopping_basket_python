@@ -24,82 +24,112 @@ basket_1 = {
     "Biscuits":  1
 }
 
-basket_1_wrong = {
+basket_wrong_items = {
     "Pinto-Beans": 4,
-    "Cookies":  1
+    "Cookies":  1,
+    "Shampoo(Large)": 9
 }
 
-basket_2 = {
-    "Baked-Beans": 2,
+basket_negative = {
+    "Baked-Beans": -4,
     "Biscuits":  1,
-    "Sardines": 2
+    "Shampoo(Small)": -8   
 }
 
+basket_3 = {
+    "Sardines": 2,
+    "Shampoo(Small)": 5,
+    "Shampoo(Medium)": 7
+}
 
+#discount: The amount of money which must be subtracted from the subtotal in order to calculate the final price of the goods in the basket.
 class BasketPricerTest(unittest.TestCase):
 
-    # Basket with zero products,
-    # An empty basket has a sub-total, discount and total each of zero.
     def test_basket_is_empty(self):
         self.init_basket_pricer = BasketPricer(
             {}, catalogue, offers
         )
-        self.assertEquals(
+        self.assertEqual(
             self.init_basket_pricer.handle(),
             {
-                'sub-total': 0,
+                'sub-total': '£0',
                 'offer': {
                     'Baked-Beans': 'buy 2 get 1 free',
                     'Sardines': '25% discount'
                 },
-                'total': 0
+                'total': '£0'
             }
         )
 
-    # Baskets cannot have a negative price.
-    # Still need to implement
     def test_basket_cannot_have_a_negative_price(self):
         self.init_basket_pricer = BasketPricer(
-            {}, catalogue, offers
+            basket_negative, catalogue, offers
         )
-        self.assertEquals(
-            self.init_basket_pricer.handle(),
-            {
-                'sub-total': 0,
-                'offer': {
-                    'Baked-Beans': 'buy 2 get 1 free',
-                    'Sardines': '25% discount'
-                },
-                'total': 0
-            }
-        )
+        with self.assertRaises(ValueError):
+            self.init_basket_pricer.handle_items()
 
     def test_successfull_transaction(self):
         self.init_basket_pricer = BasketPricer(
             basket_1, catalogue, offers
         )
-        self.assertEquals(
+        self.assertEqual(
             self.init_basket_pricer.handle(), 
             {
-                'sub-total': 5.16,
+                'sub-total': '£5.16',
                 "offer": {
-                        "Baked-Beans": "buy 2 get 1 free",
-                        "Sardines": "25% discount"
+                    "Baked-Beans": "buy 2 get 1 free",
+                    "Sardines": "25% discount"
                 },
-                "total": 5.16
+                "total": '£4.17'
+            }
+        )
+
+    def test_three_for_the_price_of_two(self):
+        self.init_basket_pricer = BasketPricer(
+            {"Baked-Beans": 3 },catalogue,  {"Baked-Beans": "buy 2 get 1 free"}
+        )
+
+        self.assertEqual(
+            self.init_basket_pricer.handle(), 
+            {
+                'sub-total': '£2.97',
+                "offer": {"Baked-Beans": "buy 2 get 1 free"},
+                "total": '£1.98'
+            }
+        )
+    
+    def test_six_for_the_price_of_four(self):
+        self.init_basket_pricer = BasketPricer(
+            {"Baked-Beans": 6 },catalogue,  {"Baked-Beans": "buy 2 get 1 free"}
+        )
+
+        self.assertEqual(
+            self.init_basket_pricer.handle(), 
+            {
+                'sub-total': '£5.94',
+                "offer": {"Baked-Beans": "buy 2 get 1 free"},
+                "total": '£3.96'
+            }
+        )
+
+    def test_nine_for_the_price_of_six(self):
+        self.init_basket_pricer = BasketPricer(
+            {"Baked-Beans": 9 },catalogue,  {"Baked-Beans": "buy 2 get 1 free"}
+        )
+
+        self.assertEqual(
+            self.init_basket_pricer.handle(), 
+            {
+                'sub-total': '£8.91',
+                "offer": {"Baked-Beans": "buy 2 get 1 free"},
+                "total": '£5.94'
             }
         )
 
     def test_basket_doesnt_match_catalogue(self):
         self.init_basket_pricer = BasketPricer(
-            basket_1_wrong, catalogue, offers
+            basket_wrong_items, catalogue, offers
         )
         with self.assertRaises(ValueError):
             self.init_basket_pricer.handle_items()
 
-    def test_basket_does_match_catalogue_but_not_the_offers(self):
-        self.init_basket_pricer = BasketPricer(
-            basket_1, catalogue, {"fake-offer": "buy 2 get 1 free", }
-        )
-        with self.assertRaises(ValueError):
-            self.init_basket_pricer.apply_offers(basket_1)
