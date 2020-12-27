@@ -1,7 +1,5 @@
 import unittest
-import sys
-import os
-sys.path.insert(0, os.path.abspath('..'))
+
 from basket_pricer import BasketPricer
 
 # Change this to a model
@@ -42,7 +40,6 @@ basket_3 = {
     "Shampoo(Medium)": 7
 }
 
-#discount: The amount of money which must be subtracted from the subtotal in order to calculate the final price of the goods in the basket.
 class BasketPricerTest(unittest.TestCase):
 
     def test_basket_is_empty(self):
