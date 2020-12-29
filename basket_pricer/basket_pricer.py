@@ -6,50 +6,53 @@ class BasketPricer:
         self.catalogue = catalogue
         self.offers = offers
 
-    def handle(self):
+    def handle(self, basket):
         items_checked = self.handle_items()
         basket_with_offers, items_with_offer = self.apply_offers(items_checked)
         return self.calcualte_total(basket_with_offers, items_with_offer)
 
-    def handle_items(self):
+    def handle_items(self, basket=None):
         if self.basket:
-            basket = {
-                item: self.basket[item]
+            if basket == None:
+                basket = self.basket 
+            basket_check = {
+                item: basket[item]
                 for item in self.catalogue
-                if item in self.basket
+                if item in basket
             }
-            wrong_items = self.basket.keys() - basket.keys()
+            wrong_items = basket.keys() - basket_check.keys()
             if wrong_items:
                 raise ValueError(
                     f"The item(s) {wrong_items} in the basket don't exists in the catalogue."
                 )
-            for item in basket:
+            for item in basket_check:
                 if basket[item] < 0:
                     raise ValueError(
                         "Baskets cannot have a negative price."
                     )
-            return basket
+            return basket_check
         else:
             return self.basket
 
-    def apply_offers(self, basket):
+    def apply_offers(self, basket_checked):
         offer = ''
-        if self.offers and basket:
+        if self.offers and basket_checked:
             # Calculate free items
             for item, val in self.offers.items():
                 if re.match(r'[buy]\w+', val):
                     total_offer = self.apply_offer_items_free(item, val)
-
-            for key, value in total_offer.items():
-                if key in basket:
-                    basket[key] = basket[key] - round(basket[key]/value)
-
+            print("total_offer--> ", total_offer)
+            print("self.basket--> ", self.basket)
+            print("basket_checked--> ", basket_checked)
+            basket_checked.update(self.update_price_with_offer(basket_checked, total_offer))
             # Calculate percentage
             for item in self.offers:
                 if re.match(r'(\d+(\.\d+)?%)', self.offers[item]):
                     offer = self.apply_offer_percentage(item)
+            print("basket_checked--> ", basket_checked)                    
+            print("self.basket--> ", self.basket)
 
-        return basket, offer
+        return basket_checked, offer
 
     def apply_offer_items_free(self, item, value):
         return {
@@ -59,22 +62,28 @@ class BasketPricer:
             ))
         }
 
+    def update_price_with_offer(self, basket_checked, total_offer):
+        return {
+            key: basket_checked[key] - round(basket_checked[key]/value)
+            for key, value in total_offer.items()
+            if key in basket_checked
+        }
+
     def apply_offer_percentage(self, item):
         offer = int(self.offers[item].split("%")[0])
         if item == next(reversed(self.offers.keys())):
             return {self.catalogue[item] - (self.catalogue[item] * offer / 100)}
             
-
-    def calcualte_total(self, basket, items_with_offer):
+    def calcualte_total(self, basket_offer, items_with_offer):
         sub_total = {
             item: self.basket[item]*self.catalogue[item]
             for item in self.catalogue
             if item in self.basket
         }
         total = {
-            item: basket[item]*self.catalogue[item]
+            item: basket_offer[item]*self.catalogue[item]
             for item in self.catalogue
-            if item in basket
+            if item in basket_offer
         }
         return {
             "sub-total": f"£{round(sum(sub_total.values()), 2)}",
