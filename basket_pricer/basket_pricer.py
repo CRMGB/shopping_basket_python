@@ -21,7 +21,7 @@ class BasketPricer:
             wrong_items = self.basket.keys() - basket.keys()
             if wrong_items:
                 raise ValueError(
-                    f"The item(s) {wrong_items} in the basket don't exists in the catalogue"
+                    f"The item(s) {wrong_items} in the basket don't exists in the catalogue."
                 )
             for item in basket:
                 if basket[item] < 0:
