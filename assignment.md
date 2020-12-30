@@ -111,5 +111,6 @@ Should give:
     sub-total: £17.0
     discount: £5.5
     total: 11.5
-
+    
 The customer has got 1 large and 1 small shampoo for free.
+

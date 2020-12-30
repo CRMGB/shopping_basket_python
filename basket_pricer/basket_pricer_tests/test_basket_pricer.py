@@ -1,8 +1,6 @@
 import unittest
-
 from basket_pricer import BasketPricer
 
-# Change this to a model
 catalogue = {
     "Baked-Beans": 0.99,
     "Biscuits": 1.20,
