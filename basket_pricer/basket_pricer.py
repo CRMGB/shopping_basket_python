@@ -1,6 +1,7 @@
 import re
 import math
 
+
 class BasketPricer:
     def __init__(self, basket, catalogue, offers):
         self.basket = basket
@@ -35,14 +36,21 @@ class BasketPricer:
     def apply_offers(self, basket_checked):
         discount = ''
         if self.offers and basket_checked:
-            discount = [
-                self.apply_offer_percentage(item, basket_checked) 
-                for item in self.offers 
-                if re.match(r'(\d+(\.\d+)?%)', self.offers[item]) 
+            # apply new offer
+            new_offer = {
+                item: self.catalogue[item]
+                for item, val in self.offers.items()
+                if re.search(r'\bget the cheapest\b', val)
                 and item in basket_checked
+            }
+            discount = [
+                self.apply_offer_percentage(item, basket_checked)
+                for item in self.offers
+                if item in basket_checked
+                and re.match(r'(\d+(\.\d+)?%)', self.offers[item])
             ]
-            if len(discount)<1:
-                total_items_offer = [ 
+            if len(discount) < 1 and not bool(new_offer):
+                total_items_offer = [
                     self.apply_offer_items_free(item, val)
                     for item, val in self.offers.items()
                     if re.match(r'[buy]\w+', val) and item in basket_checked
@@ -50,14 +58,40 @@ class BasketPricer:
                 basket_checked = self.update_number_of_items_to_pay(
                     basket_checked, total_items_offer[0]
                 )
+            if new_offer:
+                basket_checked = self.apply_new_offer(
+                    new_offer, basket_checked)
         return basket_checked, discount
+
+    def apply_new_offer(self, offer, basket_checked):
+        min_items_offer = {
+            item: re.findall(r'[0-9]+', n)[0] 
+            for item,n in self.offers.items()
+            }
+        shared_items = {
+            k: min_items_offer[k] for k in min_items_offer
+            if k in basket_checked 
+            and int(min_items_offer[k]) <= basket_checked[k]
+        }
+        basket_items_with_prices = {
+            item: self.catalogue[item]
+            for item in self.catalogue
+            if item in basket_checked
+        }
+        if shared_items:
+            cheapest = min(basket_items_with_prices, key=basket_items_with_prices.get)
+            most_expensive = max(basket_items_with_prices, key=basket_items_with_prices.get)
+            return {
+                (item if cheapest == item else item):
+                (val-1 if item == cheapest
+                or most_expensive == item else val)
+                for item, val in basket_checked.items()
+            }
 
     def apply_offer_percentage(self, item, basket_checked):
         total_price_items = self.catalogue[item]*basket_checked[item]
-        print("toatl", total_price_items)
         offer = int(self.offers[item].split("%")[0])
-        if item == next(reversed(self.offers.keys())):
-            return self.round_up(total_price_items * offer / 100, 2)
+        return self.round_up(total_price_items * offer / 100, 2)
 
     def round_up(self, n, decimals=0):
         multiplier = 10 ** decimals
@@ -82,16 +116,16 @@ class BasketPricer:
     def calcualte_result(self, basket_offer, discount):
         sub_total = self.calcualte_sub_total_and_total(self.basket)
         total = self.calcualte_sub_total_and_total(basket_offer)
-        if len(discount)==0:
-            discount = round(sub_total-total, 2)
+        if len(discount) == 0:
+            discount = sub_total-total
         else:
-            total -= discount[0]
+            total -= discount[-1]
             discount = discount[-1]
 
         return {
             "sub-total": f"£{sub_total}",
-            "discount": f"£{discount}",
-            "total": f"£{total}"
+            "discount": f"£{round(discount, 2)}",
+            "total": f"£{round(total, 2)}"
         }
 
     def calcualte_sub_total_and_total(self, basket):
