@@ -35,7 +35,7 @@ Behavior
 Other considerations
 
     We are only interested in the behavior of the shopping basket pricer component. You do not need to build an API, web-interface, database or any component which adds and removes items from the basket. Try to stay focused on implementing the pricer, and especially the logic which determines which offers are applicable to a particular basket of goods.
-    Consider edge cases in your testing. For example, a three for the price of two offer should also give you six for the price of four and nine for the price of six.
+    Consider edge cases in your testing. For example, an three for the price of two offer should also give you six for the price of four and nine for the price of six.
     You can use 3rd party components if you think it will be helpful, for example in your testing. Use the included Pipfile to identify any dependencies your component needs.
     Provide some documentation that will help us run your submission. You can put your documentation in the readme file
     You can assume all prices are in £GBP, no need to consider any other currencies.
@@ -111,5 +111,6 @@ Should give:
     sub-total: £17.0
     discount: £5.5
     total: 11.5
-
+    
 The customer has got 1 large and 1 small shampoo for free.
+
