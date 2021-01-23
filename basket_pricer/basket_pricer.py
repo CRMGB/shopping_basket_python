@@ -33,7 +33,6 @@ class BasketPricer:
         return basket_check
 
     def __apply_offers(self, basket_checked):
-
         new_offer = self.__check_whether_new_offers(basket_checked)
 
         init_discount = DiscountClass(
@@ -58,7 +57,6 @@ class BasketPricer:
             }
     
     def __apply_new_offer(self, offer, basket_checked):
-
         items_with_prices = self.__total_amount_items(basket_checked, offer)
         if self.__min_items_offer_are_in_basket(basket_checked):
             cheapest = min(items_with_prices, key=items_with_prices.get)
