@@ -1,8 +1,6 @@
-
 SHOPPING BASKET PYTHON
 
-I'm doing TDD developent based on the assignment.md which means every point from the "Behavior" section in the assignment.md should be tested from the unittest file:
-    - basket_pricer/basket_pricer_test/test_basket_pricer.py
+I'm doing TDD developent based on the assignment.md which means every point from the "Behavior" section in the assignment.md should be tested from the unittest file: - basket_pricer/basket_pricer_test/test_basket_pricer.py
 
 To run such tests I'm using python unittest with the command from basket_pricer: "python -m unittest basket_pricer_tests.test_basket_pricer.BasketPricerTest"
 

@@ -1,6 +1,5 @@
 import re
-import math
-
+from discounts import DiscountClass
 
 class BasketPricer:
     def __init__(self, basket, catalogue, offers):
@@ -34,76 +33,50 @@ class BasketPricer:
         return basket_check
 
     def __apply_offers(self, basket_checked):
-        discount = ''
+
+        new_offer = self.__check_whether_new_offers(basket_checked)
+
+        init_discount = DiscountClass(
+            new_offer, basket_checked, self.offers, self.catalogue
+        )
+
+        basket_checked, discount = init_discount.basket_with_discount()
+
+        if new_offer:
+            basket_checked = self.__apply_new_offer(
+                new_offer, basket_checked
+            )
+        return basket_checked, discount
+
+    def __check_whether_new_offers(self, basket_checked):
         if self.offers and basket_checked:
-            new_offer = {
+            return {
                 item: self.catalogue[item]
                 for item, val in self.offers.items()
                 if re.search(r'\bget the cheapest\b', val)
                 and item in basket_checked
             }
-            discount = [
-                self.__apply_offer_percentage(item, basket_checked)
-                for item in self.offers
-                if item in basket_checked
-                and re.match(r'(\d+(\.\d+)?%)', self.offers[item])
-            ]
-            if len(discount) < 1 and not bool(new_offer):
-                total_items_offer = [
-                    self.__apply_offer_items_free(item, val)
-                    for item, val in self.offers.items()
-                    if re.match(r'[buy]\w+', val) and item in basket_checked
-                ]
-                basket_checked = self.__update_number_of_items_to_pay(
-                    basket_checked, total_items_offer[0]
-                )
-            if new_offer:
-                basket_checked = self.__apply_new_offer(
-                    new_offer, basket_checked)
-        return basket_checked, discount
-
-    def __apply_offer_percentage(self, item, basket_checked):
-        total_price_items = self.catalogue[item]*basket_checked[item]
-        offer = int(self.offers[item].split("%")[0])
-        return self.__round_up(total_price_items * offer / 100, 2)
-
-    def __round_up(self, n, decimals=0):
-        multiplier = 10 ** decimals
-        return math.ceil(n * multiplier) / multiplier
-
-    def __apply_offer_items_free(self, item, value):
-        return {
-            item: sum(list(
-                int(i) for i in value.split()
-                if i.isdigit()
-            ))
-        }
-
-    def __update_number_of_items_to_pay(self, basket_checked, total_offer):
-        basket_checked.update({
-            key: basket_checked[key] - round(basket_checked[key]/value)
-            for key, value in total_offer.items()
-            if key in basket_checked
-        })
-        return basket_checked
-
+    
     def __apply_new_offer(self, offer, basket_checked):
-        min_items_offer_are_in_basket = {
-            item: re.findall(r'[0-9]+', val)[0]
-            for item, val in self.offers.items()
-            if item in basket_checked
-            and int(re.findall(r'[0-9]+', val)[0]) <= basket_checked[item]
-        }
-        items_wit_prices = self.__total_amount_items(basket_checked, offer)
-        if min_items_offer_are_in_basket:
-            cheapest = min(items_wit_prices, key=items_wit_prices.get)
-            most_expensive = max(items_wit_prices, key=items_wit_prices.get)
+
+        items_with_prices = self.__total_amount_items(basket_checked, offer)
+        if self.__min_items_offer_are_in_basket(basket_checked):
+            cheapest = min(items_with_prices, key=items_with_prices.get)
+            most_expensive = max(items_with_prices, key=items_with_prices.get)
             return {
                 (item if cheapest == item else item):
                 (val-1 if item == cheapest
                  or most_expensive == item else val)
                 for item, val in basket_checked.items()
             }
+
+    def __min_items_offer_are_in_basket(self, basket_checked):
+        return {
+            item: re.findall(r'[0-9]+', val)[0]
+            for item, val in self.offers.items()
+            if item in basket_checked
+            and int(re.findall(r'[0-9]+', val)[0]) <= basket_checked[item]
+        }
 
     def __calcualte_result(self, basket_offer, discount):
         sub_total = self.__total_amount_items(self.basket)
@@ -128,5 +101,3 @@ class BasketPricer:
             if item in basket
         }
         return items_prices if offer else round(sum(items_prices.values()), 2)
-
-# Discount class 
