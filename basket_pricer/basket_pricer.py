@@ -1,5 +1,7 @@
 import re
+import decimal
 from discounts import DiscountClass
+
 
 class BasketPricer:
     def __init__(self, basket, catalogue, offers):
@@ -21,19 +23,22 @@ class BasketPricer:
             if item in basket
         }
         wrong_items = self.basket.keys() - basket_check.keys()
-        if wrong_items:
-            raise ValueError(
-                f"The item(s) {wrong_items} in the basket don't exists in the catalogue."
+        try:
+            if wrong_items:
+                raise Exception()
+        except ValueError as err:
+            print(
+                f"{err}, The item(s) {wrong_items} in the basket don't exists in the catalogue."
             )
         for item in basket_check:
-            if basket_check[item] < 0:
-                raise ValueError(
-                    "Baskets cannot have a negative price."
-                )
+            try:
+                if basket_check[item] < 0:
+                    raise Exception()
+            except ValueError as err_neg:
+                print(f"{err_neg}, Baskets cannot have a negative price.")
         return basket_check
 
     def __apply_offers(self, basket_checked):
-
         new_offer = self.__check_whether_new_offers(basket_checked)
 
         init_discount = DiscountClass(
@@ -56,13 +61,13 @@ class BasketPricer:
                 if re.search(r'\bget the cheapest\b', val)
                 and item in basket_checked
             }
-    
-    def __apply_new_offer(self, offer, basket_checked):
 
+    def __apply_new_offer(self, offer, basket_checked):
         items_with_prices = self.__total_amount_items(basket_checked, offer)
         if self.__min_items_offer_are_in_basket(basket_checked):
             cheapest = min(items_with_prices, key=items_with_prices.get)
             most_expensive = max(items_with_prices, key=items_with_prices.get)
+
             return {
                 (item if cheapest == item else item):
                 (val-1 if item == cheapest
@@ -84,20 +89,28 @@ class BasketPricer:
         if len(discount) == 0:
             discount = sub_total-total
         else:
-            total -= discount[-1]
-            discount = discount[-1]
-
+            total -= decimal.Decimal(str(discount[-1]))
+            discount = decimal.Decimal(str(discount[-1]))
         return {
             "sub-total": f"£{sub_total}",
-            "discount": f"£{round(discount, 2)}",
-            "total": f"£{round(total, 2)}"
+            "discount": f"£{discount}",
+            "total": f"£{total}"
         }
 
     def __total_amount_items(self, basket, offer=None):
+        catalogue = self.__convert_to_decimal(self.catalogue)
         items_prices = {
-            item: (self.catalogue[item] if offer
-                   else basket[item]*self.catalogue[item])
-            for item in self.catalogue
+            item: (
+                catalogue[item] if offer
+                else basket[item]*catalogue[item]
+            )
+            for item in catalogue
             if item in basket
         }
         return items_prices if offer else round(sum(items_prices.values()), 2)
+
+    def __convert_to_decimal(self, my_dict):
+        return {
+            item: (decimal.Decimal(str(my_dict[item])))
+            for item in my_dict
+        }

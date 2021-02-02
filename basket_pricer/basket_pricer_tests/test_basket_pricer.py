@@ -86,7 +86,7 @@ class BasketPricerTest(unittest.TestCase):
         )
 
     def test_basket_cannot_have_a_negative_price(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self.init_basket_pricer.handle_items(basket_negative)
 
     def test_successfull_transaction_1(self):
@@ -176,9 +176,9 @@ class BasketPricerTest(unittest.TestCase):
         self.assertEqual(
             self.init_basket_pricer.handle(basket_4),
             {
-                'sub-total': '£17.0',
-                'discount': '£5.5',
-                "total": '£11.5'
+                'sub-total': '£17.00',
+                'discount': '£5.50',
+                "total": '£11.50'
             }
         )
 
@@ -197,5 +197,5 @@ class BasketPricerTest(unittest.TestCase):
         )
 
     def test_basket_doesnt_match_catalogue(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self.init_basket_pricer.handle_items(basket_wrong_items)
